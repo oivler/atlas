@@ -1,1 +1,1 @@
-{"live":false,"generated_at":"2026-06-18T16:18:37Z","note":"Real snapshot exported from the Atlas database (scripts/export_atlas.py). Becomes a live 15-minute feed once the pipeline publishes here.","source_repo":"oivler/atlas"}
+{"live":true,"generated_at":"2026-08-20T17:23:17Z","note":"Live Atlas API (reads atlas.db).","source_repo":"oivler/atlas"}
