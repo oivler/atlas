@@ -1,0 +1,58 @@
+name: atlas-cycle
+
+on:
+  schedule:
+    - cron: "0 4,12,20 * * *"
+  workflow_dispatch: {}
+
+concurrency:
+  group: atlas-cycle
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  cycle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - run: |
+          pip install -r requirements.txt
+          python -m spacy download en_core_web_sm
+
+      - id: db-cache
+        uses: actions/cache@v4
+        with:
+          path: atlas.db
+          key: atlas-db-${{ github.run_id }}
+          restore-keys: |
+            atlas-db-
+
+      - env:
+          ATLAS_DB: ${{ github.workspace }}/atlas.db
+        run: python -m pipeline.run_cycle --init
+
+      - env:
+          ATLAS_DB: ${{ github.workspace }}/atlas.db
+          ATLAS_EXPORT_LIVE: "1"
+          ATLAS_EXPORT_DIR: ${{ github.workspace }}/data/atlas
+        run: python scripts/export_atlas.py
+
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/atlas/*.json
+          if git diff --staged --quiet; then
+            echo "No JSON changes to commit."
+          else
+            git commit -m "chore: refresh atlas snapshots ($(date -u +%Y-%m-%dT%H:%MZ))"
+            git push
+          fi
