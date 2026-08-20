@@ -8,7 +8,7 @@ from datetime import date as _date
 from datetime import timedelta as _td
 from typing import Any
 
-WINDOWS = [1, 24, 168, 720, 8760]
+WINDOWS = [8, 24, 168, 720, 8760]
 GEO_CAP = 250
 ART_PER_LOC = 12
 
