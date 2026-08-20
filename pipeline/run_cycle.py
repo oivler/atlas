@@ -54,7 +54,7 @@ def run(*, init: bool = False, skip_ner: bool = False) -> None:
         from pipeline.process.geo import geotag
 
         t0 = time.time()
-        g = geotag(conn)
+        g = geotag(conn, limit=100000)
         print(f"  geotag              {g:4d}  ({time.time()-t0:.1f}s)")
 
         if not skip_ner:

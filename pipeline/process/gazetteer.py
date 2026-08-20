@@ -1,8 +1,83 @@
 from __future__ import annotations
 
+US_CAPITAL = ("Washington, D.C.", 38.907, -77.037)
+
+_US_STATES: list[tuple] = [
+    ("Alabama", 32.377, -86.300, "Montgomery", "Birmingham", "AL"),
+    ("Alaska", 58.302, -134.420, "Juneau", "Anchorage", "AK"),
+    ("Arizona", 33.448, -112.097, "Phoenix", "Tucson", "AZ", "Ariz."),
+    ("Arkansas", 34.747, -92.289, "Little Rock", "AR", "Ark."),
+    ("California", 38.576, -121.493, "Sacramento", "Los Angeles", "San Francisco",
+     "San Diego", "San Jose", "Oakland", "CA", "Calif."),
+    ("Colorado", 39.739, -104.985, "Denver", "Boulder", "Colorado Springs", "CO", "Colo."),
+    ("Connecticut", 41.764, -72.682, "Hartford", "New Haven", "CT", "Conn."),
+    ("Delaware", 39.157, -75.519, "Dover", "Wilmington", "DE", "Del."),
+    ("Florida", 30.438, -84.281, "Tallahassee", "Miami", "Orlando", "Tampa",
+     "Jacksonville", "FL", "Fla."),
+    ("Georgia", 33.749, -84.388, "Atlanta", "Savannah", "GA"),
+    ("Hawaii", 21.307, -157.858, "Honolulu", "HI"),
+    ("Idaho", 43.618, -116.215, "Boise", "ID"),
+    ("Illinois", 39.781, -89.650, "Springfield", "Chicago", "IL", "Ill."),
+    ("Indiana", 39.769, -86.163, "Indianapolis", "IN", "Ind."),
+    ("Iowa", 41.591, -93.604, "Des Moines", "IA"),
+    ("Kansas", 39.048, -95.678, "Topeka", "Wichita", "KS", "Kan."),
+    ("Kentucky", 38.187, -84.875, "Frankfort", "Louisville", "Lexington", "KY", "Ky."),
+    ("Louisiana", 30.457, -91.187, "Baton Rouge", "New Orleans", "LA", "La."),
+    ("Maine", 44.307, -69.782, "Augusta", "Portland", "ME"),
+    ("Maryland", 38.979, -76.491, "Annapolis", "Baltimore", "MD", "Md."),
+    ("Massachusetts", 42.359, -71.064, "Boston", "Cambridge", "MA", "Mass."),
+    ("Michigan", 42.733, -84.555, "Lansing", "Detroit", "Ann Arbor", "MI", "Mich."),
+    ("Minnesota", 44.955, -93.102, "Saint Paul", "St. Paul", "Minneapolis", "MN", "Minn."),
+    ("Mississippi", 32.304, -90.183, "Jackson", "MS", "Miss."),
+    ("Missouri", 38.579, -92.173, "Jefferson City", "St. Louis", "Kansas City", "MO", "Mo."),
+    ("Montana", 46.586, -112.024, "Helena", "Billings", "MT", "Mont."),
+    ("Nebraska", 40.808, -96.700, "Lincoln", "Omaha", "NE", "Neb."),
+    ("Nevada", 39.164, -119.766, "Carson City", "Las Vegas", "Reno", "NV", "Nev."),
+    ("New Hampshire", 43.207, -71.538, "Concord", "Manchester", "NH"),
+    ("New Jersey", 40.221, -74.756, "Trenton", "Newark", "Jersey City", "NJ"),
+    ("New Mexico", 35.682, -105.940, "Santa Fe", "Albuquerque", "NM"),
+    ("New York", 42.653, -73.757, "Albany", "NYC", "Brooklyn", "Buffalo", "NY"),
+    ("North Carolina", 35.780, -78.639, "Raleigh", "Charlotte", "Durham", "NC"),
+    ("North Dakota", 46.821, -100.784, "Bismarck", "Fargo", "ND"),
+    ("Ohio", 39.961, -82.999, "Columbus", "Cleveland", "Cincinnati", "OH"),
+    ("Oklahoma", 35.492, -97.503, "Oklahoma City", "Tulsa", "OK", "Okla."),
+    ("Oregon", 44.931, -123.029, "Salem", "Portland", "OR", "Ore."),
+    ("Pennsylvania", 40.264, -76.884, "Harrisburg", "Philadelphia", "Pittsburgh", "PA", "Penn."),
+    ("Rhode Island", 41.831, -71.415, "Providence", "RI"),
+    ("South Carolina", 34.000, -81.035, "Columbia", "Charleston", "SC"),
+    ("South Dakota", 44.367, -100.336, "Pierre", "Sioux Falls", "SD"),
+    ("Tennessee", 36.166, -86.784, "Nashville", "Memphis", "Knoxville", "TN", "Tenn."),
+    ("Texas", 30.274, -97.740, "Austin", "Houston", "Dallas", "San Antonio",
+     "Fort Worth", "TX", "Tex."),
+    ("Utah", 40.777, -111.888, "Salt Lake City", "UT"),
+    ("Vermont", 44.262, -72.581, "Montpelier", "Burlington", "VT"),
+    ("Virginia", 37.539, -77.434, "Richmond", "Norfolk", "Virginia Beach", "VA"),
+    ("Washington", 47.037, -122.901, "Washington state", "State of Washington",
+     "Olympia", "Seattle", "Spokane", "WA", "Wash."),
+    ("West Virginia", 38.336, -81.612, "Charleston", "WV"),
+    ("Wisconsin", 43.075, -89.384, "Madison", "Milwaukee", "WI", "Wis."),
+    ("Wyoming", 41.140, -104.820, "Cheyenne", "WY", "Wyo."),
+    ("Washington, D.C.", 38.907, -77.037, "Washington DC", "Washington D.C.",
+     "Washington", "District of Columbia", "D.C."),
+]
+
+_AMBIGUOUS_US_ABBREVS = {
+    "al", "ak", "az", "ar", "ca", "co", "ct", "de", "fl", "ga", "hi", "id", "il",
+    "in", "ia", "ks", "ky", "la", "me", "md", "ma", "mi", "mn", "ms", "mo", "mt",
+    "ne", "nv", "nh", "nj", "nm", "ny", "nc", "nd", "oh", "ok", "or", "pa", "ri",
+    "sc", "sd", "tn", "tx", "ut", "vt", "va", "wa", "wv", "wi", "wy",
+}
+
+US_PLACES: list[tuple[str, float, float, str]] = []
+for entry in _US_STATES:
+    name, lat, lon, *aliases = entry
+    match_as = aliases if name == "Washington" else (name, *aliases)
+    for alias in match_as:
+        US_PLACES.append((alias, float(lat), float(lon), name))
+US_PLACES.sort(key=lambda x: len(x[0]), reverse=True)
 
 _RAW: list[tuple] = [
-    ("United States", 38.90, -77.04, "USA", "U.S.", "US", "America", "Washington"),
+    ("United States", *US_CAPITAL[1:], "USA", "U.S.", "America"),
     ("United Kingdom", 51.51, -0.13, "UK", "Britain", "England", "London", "Scotland", "Wales"),
     ("Canada", 45.42, -75.70, "Ottawa", "Toronto", "Vancouver", "Montreal"),
     ("Mexico", 19.43, -99.13, "Mexico City"),
@@ -79,7 +154,6 @@ _RAW: list[tuple] = [
     ("Greenland", 64.18, -51.69),
     ("Antarctica", -75.25, 0.0),
 ]
-
 
 PLACES: list[tuple[str, float, float, str]] = []
 for entry in _RAW:

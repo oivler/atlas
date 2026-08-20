@@ -5,7 +5,8 @@ import time
 from datetime import datetime, timedelta, timezone
 
 from pipeline.collect.base import client, community_from_url, mark_fetched, parse_dt, upsert_items
-from pipeline.process.gazetteer import PLACES
+from pipeline.process.gazetteer import PLACES, US_CAPITAL
+from pipeline.process.geo import find_place
 
 SOURCE = "gdelt"
 
@@ -17,13 +18,20 @@ for alias, lat, lon, canonical in PLACES:
 def _country_geo(name: str | None):
     if not name:
         return None
-    hit = _COUNTRY.get(name.strip().lower())
+    key = name.strip().lower()
+    if key in ("united states", "usa", "u.s.", "u.s.a.", "america"):
+        return US_CAPITAL
+    hit = _COUNTRY.get(key)
     if hit:
+        canonical, lat, lon = hit
+        if canonical == "United States":
+            return US_CAPITAL
         return hit
-    for alias, lat, lon, canonical in PLACES:
-        if alias.lower() == name.strip().lower():
-            return canonical, lat, lon
     return None
+
+
+def _article_geo(title: str, sourcecountry: str | None):
+    return find_place(title) or _country_geo(sourcecountry)
 
 
 def _parse_seen(seendate: str | None) -> str:
@@ -75,7 +83,7 @@ def backfill(conn: sqlite3.Connection, *, days: int = 365) -> int:
                 title = a.get("title")
                 if not url or not title:
                     continue
-                geo = _country_geo(a.get("sourcecountry"))
+                geo = _article_geo(title, a.get("sourcecountry"))
                 row = {
                     "title": title,
                     "url": url,

@@ -3,7 +3,7 @@ from __future__ import annotations
 import sqlite3
 from datetime import datetime, timedelta, timezone
 
-from pipeline.collect.backfill_gdelt import SOURCE, _country_geo, _parse_seen
+from pipeline.collect.backfill_gdelt import SOURCE, _article_geo, _parse_seen
 from pipeline.collect.base import client, community_from_url, mark_fetched, upsert_items
 
 
@@ -32,7 +32,7 @@ def collect(conn: sqlite3.Connection) -> int:
             title = a.get("title")
             if not url or not title:
                 continue
-            geo = _country_geo(a.get("sourcecountry"))
+            geo = _article_geo(title, a.get("sourcecountry"))
             row = {
                 "title": title,
                 "url": url,
