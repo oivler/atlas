@@ -15,6 +15,7 @@ COLLECTORS = [
     ("guardian", "pipeline.collect.guardian"),
     ("wikipedia", "pipeline.collect.wikipedia"),
     ("news", "pipeline.collect.news_rss"),
+    ("gdelt", "pipeline.collect.gdelt_recent"),
 ]
 
 

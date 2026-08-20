@@ -10,3 +10,4 @@ atlas.db-*
 .DS_Store
 .env
 .spacy/
+_count.py

@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 import httpx
 
 USER_AGENT = "AtlasBot/0.1 (+https://oivler.com/atlas.html; portfolio demo)"
-TIMEOUT = 30.0
+TIMEOUT = 45.0
 
 
 def utc_now() -> str:
@@ -24,7 +24,6 @@ def parse_dt(value: Any) -> str:
     s = str(value).strip()
     if not s:
         return utc_now()
-
     s2 = s.replace("Z", "+00:00")
     try:
         dt = datetime.fromisoformat(s2)
@@ -33,7 +32,6 @@ def parse_dt(value: Any) -> str:
         return dt.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
     except ValueError:
         pass
-
     try:
         from email.utils import parsedate_to_datetime
 
@@ -73,8 +71,11 @@ def upsert_items(conn: sqlite3.Connection, rows: Iterable[dict]) -> int:
         try:
             cur.execute(
                 """
-                INSERT INTO items (title, url, community, source, score, created_at)
-                VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO items (
+                  title, url, community, source, score, created_at,
+                  latitude, longitude, location
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     title[:500],
@@ -83,6 +84,9 @@ def upsert_items(conn: sqlite3.Connection, rows: Iterable[dict]) -> int:
                     r["source"],
                     int(r.get("score") or 0),
                     r.get("created_at") or utc_now(),
+                    r.get("latitude"),
+                    r.get("longitude"),
+                    (r.get("location") or None),
                 ),
             )
             n += 1

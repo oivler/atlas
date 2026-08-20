@@ -3,7 +3,12 @@ name: atlas-cycle
 on:
   schedule:
     - cron: "0 4,12,20 * * *"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      backfill:
+        description: "Full-year historical backfill before the regular cycle"
+        type: boolean
+        default: false
 
 concurrency:
   group: atlas-cycle
@@ -15,7 +20,7 @@ permissions:
 jobs:
   cycle:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 360
     steps:
       - uses: actions/checkout@v4
 
@@ -28,7 +33,8 @@ jobs:
           pip install -r requirements.txt
           python -m spacy download en_core_web_sm
 
-      - id: db-cache
+      - name: Restore DB cache
+        id: db-cache
         uses: actions/cache@v4
         with:
           path: atlas.db
@@ -36,9 +42,24 @@ jobs:
           restore-keys: |
             atlas-db-
 
+      - name: Bootstrap DB from committed gzip if missing
+        if: steps.db-cache.outputs.cache-hit != 'true'
+        run: |
+          if [ -f atlas.db.gz ]; then
+            python -c "import gzip,shutil; shutil.copyfileobj(gzip.open('atlas.db.gz','rb'), open('atlas.db','wb'))"
+            echo "Bootstrapped atlas.db from atlas.db.gz"
+          fi
+
+      - if: ${{ inputs.backfill == true || inputs.backfill == 'true' }}
+        env:
+          ATLAS_DB: ${{ github.workspace }}/atlas.db
+          PYTHONUNBUFFERED: "1"
+        run: python -u -m pipeline.backfill --days 365
+
       - env:
           ATLAS_DB: ${{ github.workspace }}/atlas.db
-        run: python -m pipeline.run_cycle --init
+          PYTHONUNBUFFERED: "1"
+        run: python -u -m pipeline.run_cycle --init
 
       - env:
           ATLAS_DB: ${{ github.workspace }}/atlas.db
@@ -46,12 +67,16 @@ jobs:
           ATLAS_EXPORT_DIR: ${{ github.workspace }}/data/atlas
         run: python scripts/export_atlas.py
 
+      - name: Refresh committed DB snapshot
+        run: |
+          python -c "import gzip,shutil; shutil.copyfileobj(open('atlas.db','rb'), gzip.open('atlas.db.gz','wb',compresslevel=6))"
+
       - run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/atlas/*.json
+          git add data/atlas/*.json atlas.db.gz
           if git diff --staged --quiet; then
-            echo "No JSON changes to commit."
+            echo "No changes to commit."
           else
             git commit -m "chore: refresh atlas snapshots ($(date -u +%Y-%m-%dT%H:%MZ))"
             git push
